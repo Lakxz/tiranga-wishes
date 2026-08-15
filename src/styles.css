@@ -142,3 +142,94 @@
     color: var(--color-foreground);
   }
 }
+
+/* ── Independence Day design system ───────────────────────── */
+:root {
+  --saffron: oklch(0.74 0.17 55);
+  --saffron-glow: oklch(0.84 0.14 70);
+  --india-green: oklch(0.55 0.14 155);
+  --navy: oklch(0.35 0.09 255);
+  --ink: oklch(0.22 0.03 260);
+  --parchment: oklch(0.98 0.012 85);
+
+  --background: var(--parchment);
+  --foreground: var(--ink);
+  --primary: var(--saffron);
+  --primary-foreground: oklch(0.99 0 0);
+  --ring: var(--saffron);
+
+  --gradient-tiranga: linear-gradient(120deg, var(--saffron) 0%, oklch(0.99 0 0) 50%, var(--india-green) 100%);
+  --gradient-sky: radial-gradient(120% 90% at 50% 0%, oklch(0.97 0.05 80) 0%, var(--parchment) 55%, oklch(0.95 0.04 155) 100%);
+  --shadow-card: 0 30px 60px -25px oklch(0.35 0.09 255 / 0.35);
+  --shadow-glow: 0 0 60px -10px oklch(0.74 0.17 55 / 0.5);
+}
+
+@theme inline {
+  --color-saffron: var(--saffron);
+  --color-india-green: var(--india-green);
+  --color-navy: var(--navy);
+  --color-parchment: var(--parchment);
+  --font-display: "Yatra One", cursive;
+  --font-sans: "Outfit", ui-sans-serif, system-ui;
+}
+
+body { background: var(--gradient-sky); font-family: var(--font-sans); }
+.font-display { font-family: var(--font-display); }
+
+/* Waving flag */
+.flag-wrap { perspective: 800px; }
+.flag-cloth {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  animation: wave 4s ease-in-out infinite;
+  transform-style: preserve-3d;
+}
+.flag-band { height: 33.3333%; width: 100%; }
+.flag-band-white {
+  background: oklch(0.995 0 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.chakra { width: 26%; aspect-ratio: 1; animation: spin 9s linear infinite; }
+.flag-shade {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    100deg,
+    oklch(0 0 0 / 0.14) 0px,
+    oklch(0 0 0 / 0) 40px,
+    oklch(1 0 0 / 0.22) 80px,
+    oklch(0 0 0 / 0) 120px
+  );
+  background-size: 200% 100%;
+  animation: ripple 4s linear infinite;
+  mix-blend-mode: overlay;
+}
+@keyframes wave {
+  0%, 100% { transform: rotateY(-6deg) rotateX(2deg) skewY(-1.2deg); }
+  50% { transform: rotateY(6deg) rotateX(-2deg) skewY(1.4deg); }
+}
+@keyframes ripple { to { background-position: -200% 0; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@keyframes float-up {
+  from { opacity: 0; transform: translateY(24px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+.animate-rise { animation: float-up 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+@keyframes drift {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.8; }
+  100% { transform: translateY(-110vh) rotate(320deg); opacity: 0; }
+}
+.petal { position: absolute; bottom: -40px; border-radius: 999px; animation: drift linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .flag-cloth, .chakra, .flag-shade, .petal, .animate-rise { animation: none !important; }
+}
