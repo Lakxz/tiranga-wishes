@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import { WavingFlag, ChakraMark } from "@/components/WavingFlag";
+import { burstConfetti, sideCannons } from "@/lib/celebrate";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -10,7 +11,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Enter your name and get a live, animated 80th Independence Day postcard with a waving Indian flag. Download and share your wish instantly.",
+          "Enter your name, pick a patriotic poster theme and get a live animated 80th Independence Day postcard you can download.",
       },
       { property: "og:title", content: "Tiranga Wishes — 80th Independence Day of India" },
       {
@@ -29,6 +30,65 @@ const WISHES = [
   "Saffron for your courage, white for your peace, green for everything you'll grow.",
   "May this land keep rising, and may you rise with it — proud, kind and unafraid.",
 ];
+
+type ThemeId = "classic" | "midnight" | "khadi";
+
+const THEMES: Record<
+  ThemeId,
+  {
+    name: string;
+    tagline: string;
+    swatch: string;
+    surface: string;
+    cardClass: string;
+    headingClass: string;
+    bodyClass: string;
+    eyebrowClass: string;
+    footClass: string;
+    chakraClass: string;
+    layout: "split" | "stacked" | "banner";
+  }
+> = {
+  classic: {
+    name: "Tiranga Classic",
+    tagline: "Warm parchment · side by side",
+    swatch: "var(--gradient-tiranga)",
+    surface: "var(--gradient-dawn)",
+    cardClass: "border-saffron/30",
+    headingClass: "text-navy",
+    bodyClass: "text-foreground/80",
+    eyebrowClass: "text-india-green",
+    footClass: "text-navy/70",
+    chakraClass: "text-navy",
+    layout: "split",
+  },
+  midnight: {
+    name: "Midnight Chakra",
+    tagline: "Deep indigo · gold serif centre",
+    swatch: "var(--gradient-midnight)",
+    surface: "var(--gradient-midnight)",
+    cardClass: "border-gold/40",
+    headingClass: "text-gold",
+    bodyClass: "text-khadi/85",
+    eyebrowClass: "text-gold/80",
+    footClass: "text-khadi/60",
+    chakraClass: "text-gold",
+    layout: "stacked",
+  },
+  khadi: {
+    name: "Khadi Heritage",
+    tagline: "Handloom texture · banner top",
+    swatch: "var(--gradient-khadi)",
+    surface: "var(--gradient-khadi)",
+    cardClass: "border-ink-green/30 khadi-weave",
+    headingClass: "text-ink-green",
+    bodyClass: "text-ink/75",
+    eyebrowClass: "text-saffron",
+    footClass: "text-ink-green/70",
+    chakraClass: "text-ink-green",
+    layout: "banner",
+  },
+};
 
 const Petals = () => (
   <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
@@ -57,8 +117,10 @@ function Index() {
   const [name, setName] = useState("");
   const [greetName, setGreetName] = useState<string | null>(null);
   const [wish, setWish] = useState(WISHES[0]);
+  const [themeId, setThemeId] = useState<ThemeId>("classic");
   const [busy, setBusy] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const theme = THEMES[themeId];
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,25 +128,27 @@ function Index() {
     if (!clean) return;
     setWish(WISHES[Math.floor(Math.random() * WISHES.length)]);
     setGreetName(clean);
+    void burstConfetti({ x: 0.5, y: 0.55 });
+    setTimeout(() => void sideCannons(), 300);
   };
 
   const download = async () => {
     if (!cardRef.current) return;
     setBusy(true);
     try {
-      const url = await toPng(cardRef.current, {
-        pixelRatio: 3,
-        cacheBust: true,
-        backgroundColor: "#fbf8f1",
-      });
+      const url = await toPng(cardRef.current, { pixelRatio: 3, cacheBust: true });
       const a = document.createElement("a");
       a.href = url;
       a.download = `independence-day-wish-${greetName?.toLowerCase().replace(/\s+/g, "-")}.png`;
       a.click();
+      void burstConfetti({ x: 0.5, y: 0.8 });
+      void sideCannons();
     } finally {
       setBusy(false);
     }
   };
+
+  const flagSize = theme.layout === "split" ? "w-36 sm:w-48" : "w-28 sm:w-36";
 
   return (
     <main className="relative min-h-screen overflow-hidden px-4 py-10 sm:py-16">
@@ -102,8 +166,10 @@ function Index() {
         </header>
 
         {!greetName ? (
-          <section className="animate-rise mt-10 rounded-3xl border border-saffron/25 bg-parchment/80 p-6 backdrop-blur-sm sm:p-10"
-            style={{ boxShadow: "var(--shadow-card)" }}>
+          <section
+            className="animate-rise mt-10 rounded-3xl border border-saffron/25 bg-parchment/80 p-6 backdrop-blur-sm sm:p-10"
+            style={{ boxShadow: "var(--shadow-card)" }}
+          >
             <div className="mx-auto w-40 sm:w-56">
               <WavingFlag />
             </div>
@@ -133,30 +199,87 @@ function Index() {
           </section>
         ) : (
           <section className="mt-10">
+            <div className="mb-5">
+              <p className="mb-3 text-center text-xs uppercase tracking-[0.3em] text-navy/60">
+                Choose your poster theme
+              </p>
+              <div className="flex flex-wrap justify-center gap-3">
+                {(Object.keys(THEMES) as ThemeId[]).map((id) => {
+                  const t = THEMES[id];
+                  const active = id === themeId;
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => {
+                        setThemeId(id);
+                        void burstConfetti({ x: 0.5, y: 0.35 });
+                      }}
+                      aria-pressed={active}
+                      className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-all hover:scale-[1.02] ${
+                        active ? "border-saffron bg-saffron/10 ring-2 ring-saffron/30" : "border-navy/15 bg-parchment/70"
+                      }`}
+                    >
+                      <span
+                        className="h-8 w-8 shrink-0 rounded-full border border-navy/10"
+                        style={{ background: t.swatch }}
+                      />
+                      <span>
+                        <span className="block text-sm font-semibold text-navy">{t.name}</span>
+                        <span className="block text-[0.7rem] text-navy/60">{t.tagline}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div
               ref={cardRef}
-              className="animate-rise relative overflow-hidden rounded-3xl border border-saffron/30 bg-parchment p-6 sm:p-10"
-              style={{ boxShadow: "var(--shadow-card)" }}
+              key={themeId}
+              className={`animate-rise relative overflow-hidden rounded-3xl border p-6 sm:p-10 ${theme.cardClass}`}
+              style={{ background: theme.surface, boxShadow: "var(--shadow-card)" }}
             >
               <div className="absolute inset-x-0 top-0 h-2" style={{ background: "var(--gradient-tiranga)" }} />
-              <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center sm:gap-10">
-                <div className="w-36 shrink-0 sm:w-48">
+
+              {theme.layout === "banner" && (
+                <div className="mb-6 flex items-center justify-between gap-4">
+                  <span className={`text-[0.6rem] uppercase tracking-[0.35em] ${theme.eyebrowClass}`}>1947</span>
+                  <div className="h-px flex-1" style={{ background: "var(--gradient-tiranga)" }} />
+                  <span className={`text-[0.6rem] uppercase tracking-[0.35em] ${theme.eyebrowClass}`}>2026</span>
+                </div>
+              )}
+
+              <div
+                className={
+                  theme.layout === "split"
+                    ? "flex flex-col items-center gap-6 sm:flex-row sm:gap-10"
+                    : "flex flex-col items-center gap-5 text-center"
+                }
+              >
+                <div className={`${flagSize} shrink-0`}>
                   <WavingFlag />
                 </div>
-                <div className="text-center sm:text-left">
-                  <p className="text-[0.65rem] uppercase tracking-[0.35em] text-india-green">
+                <div className={theme.layout === "split" ? "text-center sm:text-left" : "text-center"}>
+                  <p className={`text-[0.65rem] uppercase tracking-[0.35em] ${theme.eyebrowClass}`}>
                     Happy Independence Day
                   </p>
-                  <h2 className="font-display mt-2 break-words text-3xl text-navy sm:text-5xl">
+                  <h2 className={`font-display mt-2 break-words text-3xl sm:text-5xl ${theme.headingClass}`}>
                     {greetName}
                   </h2>
-                  <p className="mt-4 text-base leading-relaxed text-foreground/80 sm:text-lg">{wish}</p>
-                  <div className="mt-5 flex items-center justify-center gap-3 sm:justify-start">
-                    <ChakraMark className="h-6 w-6 text-navy" />
-                    <span className="text-xs uppercase tracking-[0.3em] text-navy/70">Jai Hind · 1947–2026</span>
+                  <p className={`mt-4 text-base leading-relaxed sm:text-lg ${theme.bodyClass}`}>{wish}</p>
+                  <div
+                    className={`mt-5 flex items-center gap-3 ${
+                      theme.layout === "split" ? "justify-center sm:justify-start" : "justify-center"
+                    }`}
+                  >
+                    <ChakraMark className={`h-6 w-6 ${theme.chakraClass}`} />
+                    <span className={`text-xs uppercase tracking-[0.3em] ${theme.footClass}`}>
+                      Jai Hind · 1947–2026
+                    </span>
                   </div>
                 </div>
               </div>
+
               <div className="absolute inset-x-0 bottom-0 h-2" style={{ background: "var(--gradient-tiranga)" }} />
             </div>
 
